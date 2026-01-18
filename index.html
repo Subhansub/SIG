@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Tempat Wisata NTB-Bima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #2cc012 0%, #16a924 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .form-section {
+            padding: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .form-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #27710f;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #08ef17 0%, #08ef17 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .wisata-list {
+            padding: 20px;
+        }
+
+        .wisata-list h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .wisata-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-left: 4px solid #3622e6;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .wisata-item:hover {
+            background: #fff5e6;
+            transform: translateX(5px);
+        }
+
+        .wisata-item h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .wisata-item p {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin: 3px 0;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e67e22;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        #map {
+            flex: 1;
+            height: 100vh;
+        }
+
+        .info-click {
+            background: #fff3cd;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #856404;
+            margin-top: 10px;
+        }
+
+        .leaflet-popup-content {
+            margin: 10px;
+        }
+
+        .popup-content h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .popup-content p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .filter-section {
+            padding: 15px 20px;
+            background: #ecf0f1;
+        }
+
+        .filter-section select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+        }
+
+        .marker-icon {
+            background: #e67e22;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🏖️ Peta Tempat Wisata</h1>
+            <p>NTB - Bima</p>
+        </div>
+
+        <div class="form-section">
+            <h2>Tambah Tempat Wisata</h2>
+            <form id="wisataForm">
+                <div class="form-group">
+                    <label>Nama Tempat Wisata *</label>
+                    <input type="text" id="namaWisata" placeholder="Contoh: Pantai Lakey" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Pilih Kategori *</label>
+                    <select id="kategori" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="Pantai">Pantai</option>
+                        <option value="Gunung">Gunung</option>
+                        <option value="Air Terjun">Air Terjun</option>
+                        <option value="Budaya">Budaya</option>
+                        <option value="Religi">Religi</option>
+                        <option value="Taman">Taman</option>
+                        <option value="Museum">Museum</option>
+                        <option value="Kuliner">Kuliner</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Alamat/Lokasi</label>
+                    <textarea id="alamat" placeholder="Kecamatan Hu'u, Dompu"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <textarea id="deskripsi" placeholder="Deskripsi singkat tempat wisata"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Latitude *</label>
+                    <input type="text" id="latitude" placeholder="Klik peta untuk isi latitude" readonly required>
+                </div>
+
+                <div class="form-group">
+                    <label>Longitude *</label>
+                    <input type="text" id="longitude" placeholder="Klik peta untuk isi longitude" readonly required>
+                </div>
+
+                <div class="info-click">
+                    💡 Klik peta untuk mengisi koordinat latitude & longitude
+                </div>
+
+                <button type="submit" class="btn-primary">Tambah Tempat Wisata</button>
+            </form>
+        </div>
+
+        <div class="filter-section">
+            <h2 style="font-size: 16px; margin-bottom: 10px; color: #2c3e50;">Filter Kategori</h2>
+            <select id="filterKategori" onchange="filterWisata()">
+                <option value="">Semua</option>
+                <option value="Pantai">Pantai</option>
+                <option value="Gunung">Gunung</option>
+                <option value="Air Terjun">Air Terjun</option>
+                <option value="Budaya">Budaya</option>
+                <option value="Religi">Religi</option>
+                <option value="Taman">Taman</option>
+                <option value="Museum">Museum</option>
+                <option value="Kuliner">Kuliner</option>
+                <option value="Lainnya">Lainnya</option>
+            </select>
+        </div>
+
+        <div class="wisata-list">
+            <h2>Daftar Tempat Wisata</h2>
+            <div id="wisataListContainer"></div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Inisialisasi peta di Kota Bima, NTB
+        const map = L.map('map').setView([-8.4601, 118.7224], 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        let wisataData = [];
+        let markers = [];
+        let tempMarker = null;
+
+        // Data contoh tempat wisata di Bima
+        const sampleData = [
+            { 
+                nama: 'Pantai Lakey', 
+                kategori: 'Pantai', 
+                alamat: 'Kecamatan Hu\'u, Dompu', 
+                deskripsi: 'Pantai dengan ombak tinggi, favorit para peselancar',
+                lat: -8.8667, 
+                lng: 118.3833 
+            },
+            { 
+                nama: 'Gunung Tambora', 
+                kategori: 'Gunung', 
+                alamat: 'Kabupaten Bima & Dompu', 
+                deskripsi: 'Gunung berapi aktif dengan kaldera terbesar di dunia',
+                lat: -8.2472, 
+                lng: 118.0061 
+            },
+            { 
+                nama: 'Pantai Wane', 
+                kategori: 'Pantai', 
+                alamat: 'Kecamatan Sape, Bima', 
+                deskripsi: 'Pantai eksotis dengan pasir putih dan air jernih',
+                lat: -8.5333, 
+                lng: 119.0167 
+            },
+            { 
+                nama: 'Museum ASA Mbojo', 
+                kategori: 'Museum', 
+                alamat: 'Jl. Sultan Salahuddin, Kota Bima', 
+                deskripsi: 'Museum kebudayaan Bima',
+                lat: -8.4645, 
+                lng: 118.7246 
+            }
+        ];
+
+        // Load data contoh
+        sampleData.forEach(data => {
+            addWisata(data.nama, data.kategori, data.alamat, data.deskripsi, data.lat, data.lng);
+        });
+
+        // Event klik pada peta untuk mengisi koordinat
+        map.on('click', function(e) {
+            document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+            document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+            
+            // Hapus marker temporary sebelumnya
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+            }
+            
+            // Tambah marker temporary
+            tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+                icon: L.divIcon({
+                    className: 'temp-marker',
+                    html: '<div style="background: #e74c3c; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px;"></div>',
+                    iconSize: [20, 20]
+                })
+            }).addTo(map);
+        });
+
+        // Submit form
+        document.getElementById('wisataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nama = document.getElementById('namaWisata').value;
+            const kategori = document.getElementById('kategori').value;
+            const alamat = document.getElementById('alamat').value;
+            const deskripsi = document.getElementById('deskripsi').value;
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+
+            if (!nama || !kategori || !lat || !lng) {
+                alert('Harap isi semua field yang wajib!');
+                return;
+            }
+
+            addWisata(nama, kategori, alamat, deskripsi, lat, lng);
+            
+            // Reset form
+            document.getElementById('wisataForm').reset();
+            
+            // Hapus marker temporary
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
+
+            alert('Tempat wisata berhasil ditambahkan!');
+        });
+
+        function addWisata(nama, kategori, alamat, deskripsi, lat, lng) {
+            const wisata = { nama, kategori, alamat, deskripsi, lat, lng };
+            wisataData.push(wisata);
+            
+            // Tambah marker ke peta
+            const marker = L.marker([lat, lng]).addTo(map);
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>🏖️ ${nama}</h3>
+                    <p><strong>Kategori:</strong> ${kategori}</p>
+                    <p><strong>Lokasi:</strong> ${alamat || '-'}</p>
+                    ${deskripsi ? `<p><strong>Deskripsi:</strong> ${deskripsi}</p>` : ''}
+                    <p><strong>Koordinat:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+                    <button class="btn-delete" onclick="deleteWisata(${wisataData.length - 1})">Hapus</button>
+                </div>
+            `;
+            marker.bindPopup(popupContent);
+            markers.push(marker);
+            
+            // Update list
+            updateWisataList();
+        }
+
+        function updateWisataList() {
+            const container = document.getElementById('wisataListContainer');
+            const filter = document.getElementById('filterKategori').value;
+            
+            let filteredData = wisataData;
+            if (filter) {
+                filteredData = wisataData.filter(w => w.kategori === filter);
+            }
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #7f8c8d; font-size: 14px;">Belum ada tempat wisata</p>';
+                return;
+            }
+            
+            container.innerHTML = filteredData.map((wisata, index) => `
+                <div class="wisata-item" onclick="goToWisata(${wisataData.indexOf(wisata)})">
+                    <h3>${wisata.nama}</h3>
+                    <p>📍 ${wisata.alamat || 'Lokasi tidak tersedia'}</p>
+                    ${wisata.deskripsi ? `<p style="font-style: italic;">${wisata.deskripsi}</p>` : ''}
+                    <span class="category-badge">${wisata.kategori}</span>
+                </div>
+            `).join('');
+        }
+
+        function goToWisata(index) {
+            const wisata = wisataData[index];
+            map.flyTo([wisata.lat, wisata.lng], 15, { duration: 1 });
+            markers[index].openPopup();
+        }
+
+        function deleteWisata(index) {
+            if (confirm('Yakin ingin menghapus tempat wisata ini?')) {
+                map.removeLayer(markers[index]);
+                wisataData.splice(index, 1);
+                markers.splice(index, 1);
+                updateWisataList();
+                map.closePopup();
+            }
+        }
+
+        function filterWisata() {
+            updateWisataList();
+        }
+
+        // Initial list update
+        updateWisataList();
+    </script>
+</body>
+</html>
